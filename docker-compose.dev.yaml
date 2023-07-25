@@ -1,0 +1,162 @@
+version: "3.9"
+
+services:
+  root:
+    build:
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile
+      args:
+        - REMOTE_USER=${ROOT_REMOTE_USER}
+        - REMOTE_WORKSPACES=${ROOT_REMOTE_WORKSPACES}
+        - REMOTE_HOME=${ROOT_REMOTE_HOME}
+    container_name: ${ROOT_CONTAINER_NAME}
+    working_dir: ${ROOT_REMOTE_WORKSPACES}
+    user: ${ROOT_REMOTE_USER}
+    tty: true
+    dns:
+      - 8.8.8.8
+    volumes:
+      - type: bind
+        source: .
+        target: ${PROJECT_ROOT}
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: root-bash-history
+        target: /commandhistory
+      - type: volume
+        source: root-vscode-extensions
+        target: ${ROOT_REMOTE_HOME}/.vscode-server/extensions
+      - type: volume
+        source: root-node_modules
+        target: ${ROOT_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: frontend-node_modules
+        target: ${FRONTEND_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: backend-node_modules
+        target: ${BACKEND_REMOTE_WORKSPACES}/node_modules
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/.devcontainer/Dockerfile
+      args:
+        - REMOTE_USER=${FRONTEND_REMOTE_USER}
+        - REMOTE_WORKSPACES=${FRONTEND_REMOTE_WORKSPACES}
+        - REMOTE_HOME=${FRONTEND_REMOTE_HOME}
+    container_name: ${FRONTEND_CONTAINER_NAME}
+    working_dir: ${FRONTEND_REMOTE_WORKSPACES}
+    user: ${FRONTEND_REMOTE_USER}
+    tty: true
+    dns:
+      - 8.8.8.8
+    volumes:
+      - type: bind
+        source: .
+        target: ${PROJECT_ROOT}
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: frontend-bash-history
+        target: /commandhistory
+      - type: volume
+        source: frontend-vscode-extensions
+        target: ${FRONTEND_REMOTE_HOME}/.vscode-server/extensions
+      - type: volume
+        source: root-node_modules
+        target: ${ROOT_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: frontend-node_modules
+        target: ${FRONTEND_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: backend-node_modules
+        target: ${BACKEND_REMOTE_WORKSPACES}/node_modules
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/.devcontainer/Dockerfile
+      args:
+        - REMOTE_USER=${BACKEND_REMOTE_USER}
+        - REMOTE_WORKSPACES=${BACKEND_REMOTE_WORKSPACES}
+        - REMOTE_HOME=${BACKEND_REMOTE_HOME}
+    container_name: ${BACKEND_CONTAINER_NAME}
+    working_dir: ${BACKEND_REMOTE_WORKSPACES}
+    user: ${BACKEND_REMOTE_USER}
+    tty: true
+    dns:
+      - 8.8.8.8
+    volumes:
+      - type: bind
+        source: .
+        target: ${PROJECT_ROOT}
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - type: volume
+        source: backend-bash-history
+        target: /commandhistory
+      - type: volume
+        source: backend-vscode-extensions
+        target: ${BACKEND_REMOTE_HOME}/.vscode-server/extensions
+      - type: volume
+        source: root-node_modules
+        target: ${ROOT_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: frontend-node_modules
+        target: ${FRONTEND_REMOTE_WORKSPACES}/node_modules
+      - type: volume
+        source: backend-node_modules
+        target: ${BACKEND_REMOTE_WORKSPACES}/node_modules
+    depends_on:
+      - database
+
+  database:
+    build:
+      context: .
+      dockerfile: ./database/Dockerfile
+    container_name: ${DATABASE_CONTAINER_NAME}
+    environment:
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_ROLE=${DATABASE_ROLE}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    tty: true
+    ports:
+      - 5432:5432
+    volumes:
+      - type: volume
+        source: database-persistence
+        target: /var/lib/postgresql/data
+
+networks:
+  default:
+    name: ${NETWORK_NAME}
+
+volumes:
+  root-bash-history:
+    name: ${ROOT_BASH_HISTORY_VOLUME_NAME}
+  root-vscode-extensions:
+    name: ${ROOT_VSCODE_EXTENSIONS_VOLUME_NAME}
+  root-node_modules:
+    name: ${ROOT_NODE_MODULES_VOLUME_NAME}
+
+  frontend-bash-history:
+    name: ${FRONTEND_BASH_HISTORY_VOLUME_NAME}
+  frontend-vscode-extensions:
+    name: ${FRONTEND_VSCODE_EXTENSIONS_VOLUME_NAME}
+  frontend-node_modules:
+    name: ${FRONTEND_NODE_MODULES_VOLUME_NAME}
+
+  backend-bash-history:
+    name: ${BACKEND_BASH_HISTORY_VOLUME_NAME}
+  backend-vscode-extensions:
+    name: ${BACKEND_VSCODE_EXTENSIONS_VOLUME_NAME}
+  backend-node_modules:
+    name: ${BACKEND_NODE_MODULES_VOLUME_NAME}
+
+  database-persistence:
+    name: ${DATABASE_PERSISTENCE_VOLUME_NAME}
